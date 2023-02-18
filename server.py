@@ -35,10 +35,10 @@ def login():
 @app.route("/callback", methods=["GET", "POST"])
 def callback():
     token = oauth.auth0.authorize_access_token()
-    session["user"] = token # session is from flask
-    state = session.get("user")
+    session["token"] = token # session is from flask
+    session["user"] = token["userinfo"]
 
-    return redirect("/")
+    return redirect("/info")
 
 @app.route("/logout")
 def logout():
@@ -48,7 +48,7 @@ def logout():
         + "/v2/logout?"
         + urlencode(
             {
-                "returnTo": url_for("info", _external=True),
+                "returnTo": url_for("main", _external=True),
                 "client_id": env.get("AUTH0_CLIENT_ID"),
             },
             quote_via=quote_plus,
@@ -58,7 +58,7 @@ def logout():
 # CONTENT
 
 @app.route("/")
-def info():
+def main():
     logout_state = ""
     state = "temp"
     if session.get("user") is None:
@@ -68,3 +68,7 @@ def info():
         state = json.dumps(session.get("user"),indent=4)
 
     return render_template('main.html',logout_state=logout_state,state=state)
+
+@app.route("/info")
+def info():
+    return render_template('info.html',email=session.get("user")["email"])
